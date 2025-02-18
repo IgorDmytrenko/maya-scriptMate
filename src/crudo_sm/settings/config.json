@@ -1,0 +1,50 @@
+{
+    "general": [
+        {
+            "title": "crudo | Script Mate",
+            "addon_name": "crudo_scriptMate",
+            "version": "v0.0.2",
+            "root_path": "crudo_scriptMate",
+            "3dcc": "Maya",
+            "gumroad": "https://ihordmytrenko.gumroad.com/"
+        }
+    ],
+    "log":[{
+      "state": true,
+      "path": "~/crudo.dev/logs/scriptMate/logs/log.log"
+    }],
+    "security": [
+        {
+          "pymodules": [
+              "os",
+              "sys",
+              "subprocess",
+              "shutil",
+              "socket",
+              "http",
+              "urllib",
+              "ctypes",
+              "pickle",
+              "marshal",
+              "eval",
+              "exec",
+              "compile",
+              "xmlrpc"
+            ]
+        }
+    ],
+    "userSettings": [
+        {
+            "path": "~/crudo.dev/settings/scriptMate/maya/config.json"
+        }
+    ],
+    "userScripts": [
+        {
+            "local_path": "~/crudo.dev/userScripts/maya",
+            "network_path": "~/crudo.dev/userScripts/maya"
+        }
+    ],
+    "links": [{
+        "documentation": "https://crudo.dev/docs/maya/scriptmate-maya-plugin/"
+    }]
+}

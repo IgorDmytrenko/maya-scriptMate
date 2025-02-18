@@ -1,0 +1,52 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'  # Runs when a new tag like v1.0.0 is pushed
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Ensures all commits & tags are fetched
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Run build script
+        run: python build.py
+
+      - name: Find built ZIP file
+        id: find_artifact
+        run: echo "BUILD_ZIP=$(find builds -name '*.zip' | head -n 1)" >> $GITHUB_ENV
+
+      - name: Extract Commit Message for Release Notes
+        id: release_notes
+        run: |
+          TAG_NAME="${{ github.ref_name }}"  # Extracts the current tag (e.g., v1.0.0)
+          
+          # Get the commit SHA associated with the tag
+          COMMIT_SHA=$(git rev-list -n 1 "$TAG_NAME")
+
+          # Extract the commit message for this specific commit
+          git log -n 1 --format="%s%n%n%b" "$COMMIT_SHA" > release_notes.txt
+
+      - name: Create GitHub Release and Upload Asset
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BUILD_FILE="${{ env.BUILD_ZIP }}"
+          TAG_NAME="${{ github.ref_name }}"
+
+          # Create a GitHub release using only the tagged commit's message
+          gh release create "$TAG_NAME" "$BUILD_FILE" \
+            --title "Release $TAG_NAME" \
+            --notes-file release_notes.txt \
+            --repo ${{ github.repository }}
