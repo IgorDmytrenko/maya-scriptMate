@@ -108,3 +108,8 @@ For detailed instructions, **visit the full guide:**
 
 ---
 
+## LICENSE
+
+---
+
+MIT
