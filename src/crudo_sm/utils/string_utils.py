@@ -20,3 +20,5 @@ def format_menu_name(title: str) -> str:
             title
         )
 
+# dir_name = "menu_New + Modeling @ @"
+# print(format_menu_name(dir_name))

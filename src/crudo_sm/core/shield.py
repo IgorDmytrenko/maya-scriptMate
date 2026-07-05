@@ -1,8 +1,8 @@
 # shield.py
 import ast
-import py_compile
 import os
-from crudo_sm.settings.common import CONFIG
+import py_compile
+
 
 def unsafe(func=None, reason=None):
     def decorator(f):
@@ -28,7 +28,7 @@ def validate_module(file_path):
 
     # Additional static analysis using AST to catch indentation errors
     try:
-        with open(file_path, "r") as f:
+        with open(file_path, "r", encoding='utf-8') as f:
             ast.parse(f.read(), filename=file_path)
     except (IndentationError, SyntaxError, NameError) as e:
         return False, "Syntax Error", str(e)
@@ -36,8 +36,8 @@ def validate_module(file_path):
 
 
 class UnsafeModuleChecker:
-    UNSAFE_MODULES = CONFIG.get_core_param("security", "pymodules")
-    
+    UNSAFE_MODULES = {"os", "sys", "shutil", "subprocess", "usb"}
+
     def __init__(self, file_path):
         self.file_path = file_path
         self.unsafe_findings = {}
@@ -49,7 +49,7 @@ class UnsafeModuleChecker:
         Original check_unsafe_modules functionality.
         Returns tuple of (unsafe_imports, decorator_info)
         """
-        with open(self.file_path, "r") as f:
+        with open(self.file_path, "r", encoding="utf-8") as f:
             tree = ast.parse(f.read(), filename=self.file_path)
 
         has_unsafe_imports = []
@@ -70,9 +70,11 @@ class UnsafeModuleChecker:
                     for decorator in node.decorator_list:
                         if isinstance(decorator, ast.Name) and decorator.id == "unsafe":
                             unsafe_decorator_info = (True, "No reason provided")
-                        elif (isinstance(decorator, ast.Call) and
-                              isinstance(decorator.func, ast.Name) and
-                              decorator.func.id == "unsafe"):
+                        elif (
+                            isinstance(decorator, ast.Call)
+                            and isinstance(decorator.func, ast.Name)
+                            and decorator.func.id == "unsafe"
+                        ):
                             reason = "No reason provided"
                             for keyword in decorator.keywords:
                                 if keyword.arg == "reason":
@@ -93,7 +95,9 @@ class UnsafeModuleChecker:
 
         # First check main.py for @unsafe decorator
         if os.path.exists(main_path):
-            main_unsafe_imports, main_decorator_info = UnsafeModuleChecker(main_path).check_file()
+            main_unsafe_imports, main_decorator_info = UnsafeModuleChecker(
+                main_path
+            ).check_file()
             self.has_unsafe_decorator = main_decorator_info[0]
             self.decorator_reason = main_decorator_info[1]
 
@@ -101,7 +105,7 @@ class UnsafeModuleChecker:
             for item in os.listdir(dir_path):
                 item_path = os.path.join(dir_path, item)
 
-                if item.endswith('.py'):
+                if item.endswith(".py") and not item.startswith("._"):
                     checker = UnsafeModuleChecker(item_path)
                     unsafe_imports, _ = checker.check_file()
                     if unsafe_imports:
@@ -112,14 +116,17 @@ class UnsafeModuleChecker:
                             # If we have @unsafe, just record for information
                             self.unsafe_findings[item_path] = unsafe_imports
 
-                elif os.path.isdir(item_path) and not item.startswith('__'):
+                elif os.path.isdir(item_path) and not item.startswith("__"):
                     scan_directory(item_path)
 
         if os.path.isfile(self.file_path):
             return self.check_file()
         else:
             scan_directory(self.file_path)
-            return self.unsafe_findings, (self.has_unsafe_decorator, self.decorator_reason)
+            return self.unsafe_findings, (
+                self.has_unsafe_decorator,
+                self.decorator_reason,
+            )
 
 
 # Maintain backward compatibility
@@ -133,7 +140,7 @@ def has_operator_dictionary(file_path):
     """
     Check if a Python file defines a dictionary named 'OPERATOR'.
     """
-    with open(file_path, "r") as f:
+    with open(file_path, "r", encoding='utf-8') as f:
         tree = ast.parse(f.read(), filename=file_path)
 
     for node in ast.walk(tree):

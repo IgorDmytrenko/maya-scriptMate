@@ -52,7 +52,7 @@ class ScriptManagerLogger:
 
     def get_local_ip(self):
         try:
-            # Use a fake connection to identify the real network interface
+            # Use a dummy connection to identify the real network interface
             with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
                 # Connect to a non-routable address (doesn't send data)
                 s.connect(("192.168.1.1", 80))
@@ -63,8 +63,10 @@ class ScriptManagerLogger:
     
     def clear_logs(self):
         """Clear log from memory after debugging."""
+        # if self.finalized == True:
         self.error_buffer.clear()
         self.logs.clear()
+        # self.finalized = False
 
     def print_error_buffer(self):
         """Print current error buffer to Maya console with appropriate formatting."""
@@ -107,7 +109,7 @@ class ScriptManagerLogger:
         column_config = [
             ("Source", max(8, 8)),
             ("Module", max(40, 10)),
-            ("Has Unsafe Imports", max(45, 15)),
+            ("Has Unsafe Imports", max(35, 15)),
             ("Reason", max(35, 10)),
             ("Errors", max(60, 15)),
             ("Timestamp", max(20, 19))
@@ -128,31 +130,23 @@ class ScriptManagerLogger:
 
             if column_type == 'imports':
                 # Handle import statements with careful semicolon splitting
-                # print("text check: ", text)
                 parts = text.split('; ')
-                # print("CHECK: ", parts)
                 lines = []
                 current_line = []
                 current_length = 0
 
                 for part in parts:
-                    subparts = part.split(', ')
-                    for subpart in subparts:
-                        if '.py:' in subpart and current_line:
-                            lines.append(' '.join(current_line))
-                            current_line = [subpart]
-                            current_length = len(subpart)
-                        elif current_length + len(subpart) + 2 <= width:
-                            current_line.append(subpart)
-                            current_length += len(subpart) + 2
-                        else:
-                            if current_line:
-                                lines.append(', '.join(current_line))
-                            current_line = [subpart]
-                            current_length = len(subpart)
+                    if current_length + len(part) + 2 <= width:
+                        current_line.append(part)
+                        current_length += len(part) + 2
+                    else:
+                        if current_line:
+                            lines.append('; '.join(current_line))
+                        current_line = [part]
+                        current_length = len(part)
 
                 if current_line:
-                    lines.append(' '.join(current_line))
+                    lines.append('; '.join(current_line))
                 return lines or ['-']
 
             elif column_type == 'error':
